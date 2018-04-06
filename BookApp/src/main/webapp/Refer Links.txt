@@ -1,5 +1,0 @@
-Refer Html Links:
-
-1. Landing page-https://getbootstrap.com/docs/4.0/examples/blog/
-   Product List-https://bootsnipp.com/snippets/RldKA
-2. Shopping cart -https://bootsnipp.com/snippets/35e4p
