@@ -1,0 +1,157 @@
+    .input-group .close {
+        font-size: 8px;
+        width: 15px;
+        height: 15px;
+        background: #000000;
+        border-radius: 50%;
+        color: #fff;
+        box-shadow: none;
+        text-shadow: none;
+        padding: 4px 0;
+        position: relative;
+        top: -6px;
+        right: 9px;
+        z-index: 999;
+        text-align: center;
+    }
+  
+    .drop-select .close {
+    font-size: 8px;
+    width: 15px;
+    height: 15px;
+    background: #000000;
+    border-radius: 50%;
+    color: #fff;
+    box-shadow: none;
+    text-shadow: none;
+    padding: 4px 3px;
+    position: relative;
+    top: 15px;
+    right: -1px;
+    z-index: 999;
+}
+ 
+    .popover ul {
+        padding: 0;
+    }
+    
+    .popover ul li {
+        list-style: none;
+        width: 100%;
+        display: inline-block;
+        margin: 2px 0;
+        white-space: nowrap;
+    }
+    
+   .drop-select .glyphicon.glyphicon-move {
+    font-size: 17px;
+    /* width: 15px; */
+    /* height: 15px; */
+    box-shadow: none;
+    text-shadow: none;
+    padding: 4px 0;
+    position: relative;
+    top: 14px;
+    left: -4px;
+    z-index: 999;
+    text-align: center;
+}
+    
+    .input-group .glyphicon.glyphicon-move {
+        font-size: 17px;
+        /* width: 15px; */
+        /* height: 15px; */
+        box-shadow: none;
+        text-shadow: none;
+        padding: 4px 0;
+        position: relative;
+        top: -22px;
+        left: 16px;
+        z-index: 999;
+        text-align: center;
+    }
+    
+    #pollSlider-button {
+        position: fixed;
+        width: 55px;
+        height: 100%;
+        right: 0px;
+        background: white;
+        top: 140px;
+        box-shadow: 0px 0px 5px 1px #dad6d6;
+        top: 118px;
+    }
+''    
+    .pollSlider {
+        position: fixed;
+        height: 100%;
+        width: 255px;
+        right: 0px;
+        margin-right: -255px;
+        background: #fff;
+        top: 118px;
+        box-shadow: 5px 0px 5px 1px #dad6d6;
+        z-index: 1;
+    }
+    
+    .fixed-action-btn .btn-circle {
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        padding: 6px 0;
+        font-size: 12px;
+        line-height: 1;
+        border-radius: 15px;
+        min-width: 30px;
+        background: #00bc9c;
+        color: #fff !important;
+        padding: 7px;
+        display: block;
+    }
+    
+    .fixed-action-btn {
+        position: fixed;
+        right: 23px;
+        bottom: 75px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+    
+    .fixed-action-btn ul {
+        left: -120px;
+        right: 50px;
+        text-align: center;
+        position: absolute;
+        bottom: 64px;
+        margin: 0;
+        visibility: hidden;
+        padding: 0;
+    }
+    
+    .fixed-action-btn ul li {
+        margin-bottom: 5px;
+        list-style: none;
+    }
+    
+    .fixed-action-btn.active ul {
+        visibility: visible;
+    }
+    
+    .btn-floating .btn {
+        min-width: 160px;
+    }
+    
+     @media only (max-width: 767px){
+	    
+	    .PDF_View {
+	
+	    position: fixed;
+	}
+	
+	
+	
+	.pollSlider {
+    position: fixed;
+    top: 118px;
+	}

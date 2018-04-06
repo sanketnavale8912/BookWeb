@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc
+	 http://www.springframework.org/schema/mvc/spring-mvc.xsd
+     http://www.springframework.org/schema/beans
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/context 
+     http://www.springframework.org/schema/context/spring-context.xsd
+     http://www.springframework.org/schema/task
+	http://www.springframework.org/schema/task/spring-task-3.0.xsd
+     ">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+		
+	<context:property-placeholder location="classpath:database.properties"></context:property-placeholder>  
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<task:annotation-driven/>
+
+	<context:annotation-config />
+	
+	<context:component-scan base-package="com.drysign" />
+	
+ 	<!-- <beans:bean id="emailScheduler" class="com.scheduler.EmailScheduler"></beans:bean> -->
+ 	
+	<beans:bean class="org.springframework.jdbc.datasource.DriverManagerDataSource" id="dataSource">
+		<beans:property name="driverClassName" value="${database.driver}"></beans:property>
+		<beans:property name="url" value="${database.url}"></beans:property>
+		<beans:property name="username" value="${database.user}"></beans:property>
+		<beans:property name="password" value="${database.password}"></beans:property>
+	</beans:bean>
+	
+	<beans:bean class="org.springframework.jdbc.core.JdbcTemplate" id="jdbcTemplate">
+		<beans:property name="dataSource" ref="dataSource"></beans:property>
+	</beans:bean>
+
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+	<resources mapping="/css/**" location="/css/" />
+	<resources mapping="/js/**" location="/js/" />
+	<resources mapping="/images/**" location="/images/" />
+	<resources mapping="/login/**" location="/login/" />
+	<resources mapping="/fonts/**" location="/fonts/" />
+	<resources mapping="/egnyte/**" location="/egnyte/" />
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/view/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"></beans:bean>
+<!-- 	<beans:bean id="registration" class="com.drysign.model.Registration"></beans:bean>
+	<beans:bean id="registrationValidation" class="com.drysign.validation.RegistrationValidation"></beans:bean>
+	<beans:bean id="contactUsValidation" class="com.drysign.validation.ContactUsValidation"></beans:bean>
+	<beans:bean id="resetPasswordValidator" class="com.drysign.validation.ResetPasswordValidator"></beans:bean>
+	<beans:bean id="updateProfileValidation" class="com.drysign.validation.UpdateProfileValidation"></beans:bean>
+	<beans:bean id="jerseyDao" class="com.drysign.dao.JerseyDaoImpl"></beans:bean> -->
+	<beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+	<beans:bean id="queryProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+    	<beans:property name="locations" value="classpath:/sqlserver-queries.xml" />
+	</beans:bean>
+	
+	<beans:bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+	<beans:property name="host" value="smtp.gmail.com" />
+	<beans:property name="port" value="587" />
+	<beans:property name="username" value="support@drysign.global" />
+	<beans:property name="password" value="Changem987" />
+
+	<beans:property name="javaMailProperties">
+	   <beans:props>
+       	      <beans:prop key="mail.smtp.auth">true</beans:prop>
+       	      <beans:prop key="mail.smtp.starttls.enable">true</beans:prop>
+       	   </beans:props>
+	</beans:property>
+	</beans:bean>
+
+		<beans:bean id="emailSender" class="com.drysign.utility.EmailSender">
+		<beans:property name="mailSender" ref="mailSender" />
+		<beans:property name="simpleMailMessage" ref="customeMailMessage" />
+	</beans:bean>
+
+		<beans:bean id="customeMailMessage"
+			class="org.springframework.mail.SimpleMailMessage">
+		</beans:bean>
+
+</beans:beans>

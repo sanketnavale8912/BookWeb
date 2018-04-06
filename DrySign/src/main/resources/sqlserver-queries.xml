@@ -1,0 +1,1928 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+
+<properties>
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="saveOrUpdateDocumentSelfSign">
+    <![CDATA[
+      	 UPDATE document
+			SET sign_type = ?,
+		    subject = ?,
+		    message = ?,
+		    complete_date = ?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+<entry key="saveOrUpdateDocument">
+    <![CDATA[
+      	 UPDATE document
+		SET 
+			status=?,
+			doc_status=?,
+			upload_date=?,
+		    complete_date = ?,
+		    subject=?,
+		    message=?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+<entry key="saveOrUpdateDocument1">
+    <![CDATA[
+      	 UPDATE document
+		SET 
+			status=?,
+			doc_status=?,
+			complete_date = ?,
+		    subject=?,
+		    message=?
+		WHERE id = ?
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="saveDocumentFieldsSelfSign">
+    <![CDATA[
+        INSERT INTO document_sign_field (signer_id, document_id, page_number, priority, position_left, position_top, height, width, field_value, field_name, field_type,created_date)
+  		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="saveDocumentEmailDataSelfSign">
+    <![CDATA[
+	       INSERT INTO document_sign_email (signer_id, document_id, priority, status)
+	  VALUES (?, ?, ?, ?)
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="documentsHistory">
+    <![CDATA[
+	    SELECT
+		  doc.id AS docId,
+		  doc.envelopeid AS envelopeId,
+		  doc.sign_type AS signType,
+		  doc.name AS documentName,
+		  doc.subject AS subject,
+		  doc.message AS message,
+		  cl.email AS signerEmail,
+		  isnull(cl.firstname,'')+ ' '+isnull(cl.lastname,'') AS requestedBy,
+		  CASE doc.status 
+		  WHEN '1' THEN CONVERT(VARCHAR(10), isnull(doc.complete_date,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(doc.complete_date,''), 22), 11))
+		  ELSE CONVERT(VARCHAR(10), isnull(doc.upload_date,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(doc.upload_date,''), 22), 11))
+		  END AS 'completedDate',
+		  CASE doc.status 
+		  WHEN '1' THEN 'Completed Documents'
+		  WHEN '0' THEN 'Out For Signature'
+		  ELSE 'Documents' 
+		END AS 'status'
+		FROM document AS doc
+		INNER JOIN users AS cl
+		ON cl.id = doc.user_id
+		ORDER BY completedDate DESC
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="documentsHistoryPriority">
+    <![CDATA[
+	    SELECT
+		  cl.email AS signerEmailId,
+		  signEmail.status AS signerStatus,
+		  cl.name AS signerName,
+		  signEmail.priority AS priority,
+		  signEmail.sent_email_count AS emailCount
+		FROM document AS doc
+		INNER JOIN document_sign_email AS signEmail
+		  ON signEmail.document_id = doc.id
+		INNER JOIN signer AS cl
+		  ON cl.id = signEmail.signer_id
+		WHERE doc.id = ?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="completedDocuments">
+    <![CDATA[
+	    SELECT
+		  doc.id AS docId,
+		  doc.envelopeid AS envelopeId,
+		  doc.sign_type AS signType,
+		  doc.name AS documentName,
+		   CASE 
+			 WHEN doc.subject is null or doc.subject = '' 
+             THEN doc.name 
+			ELSE doc.subject 
+          END AS subject,
+		  isnull(doc.message,'') AS message,
+		  cl.email AS signerEmail,
+		  isnull(cl.firstname,'')+ ' '+isnull(cl.lastname,'') AS requestedBy,
+		   CONVERT(VARCHAR(10), isnull(doc.complete_date,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(doc.complete_date,''), 22), 11)) AS completedDate,
+		  'Completed Document' AS status
+		FROM document AS doc
+		INNER JOIN users AS cl
+		  ON cl.id = doc.user_id
+		WHERE doc.status = 1
+		AND doc.doc_status='103'
+		AND cl.id = ?
+		ORDER BY doc.id DESC
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="completedDocumentsPriority">
+    <![CDATA[
+      		 select 
+		DISTINCT s.email AS signerEmailId,
+		s.status AS signerStatus,
+		s.name AS signerName,
+		f.priority AS priority
+		from signer AS s
+		INNER JOIN document_sign_field AS f
+		ON s.id =f.signer_id
+		where f.document_id=? and s.status=1
+		order by f.priority asc
+    ]]>
+
+</entry>    
+ 
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="outForSignature">
+    <![CDATA[
+		SELECT
+		  doc.id AS docId,
+		  doc.envelopeid AS envelopeId,
+		  doc.name AS documentName,
+		  doc.sign_type AS signType,
+		  doc.subject AS subject,
+		  doc.message AS message,
+		  cl.email AS requestedEmail,
+		  isnull(cl.firstname,'')+ ' '+isnull(cl.lastname,'') AS requestedBy,
+		  CONVERT(VARCHAR(10), isnull(doc.upload_date,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(doc.upload_date,''), 22), 11)) AS uploadDate,
+		  'Out For Signature' AS status
+		FROM document AS doc
+		INNER JOIN users AS cl
+		  ON cl.id = doc.user_id
+		WHERE doc.status = 0 
+		AND cl.id = ?
+		AND doc.subject is not null 
+		AND doc.message is not null 
+		AND doc.digital IS NULL
+		ORDER BY doc.id DESC
+    ]]>
+
+</entry>    
+
+ 
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="outForSignaturePriority">
+    <![CDATA[
+		select 
+		DISTINCT s.email AS signerEmailId,
+		s.id As signerId,
+		s.status AS signerStatus,
+		s.name AS signerName,
+		f.priority AS priority
+		from signer AS s
+		INNER JOIN document_sign_field AS f
+		ON s.id =f.signer_id
+		where f.document_id=?
+		order by s.id asc
+		
+    ]]>
+
+</entry>  
+
+
+
+<!-- Entry key mapped with DocumentDaoImpl.java  -->
+<entry key="getDocumentSelfSign">
+    <![CDATA[
+        SELECT
+		  *
+		FROM document
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getStatusUserJersey">
+    <![CDATA[
+        SELECT TOP 1
+		  status
+		FROM client
+		WHERE id = ?
+		AND email = ?
+		AND password = ?
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getIdUserJersey">
+    <![CDATA[
+        SELECT
+		  id
+		FROM tb_client_user
+		WHERE email = ?
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="addUserJersey">
+    <![CDATA[
+        INSERT INTO tb_client_user (client_id, email, password, token, status, date)
+  VALUES (?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry> 
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getAllClientUser">
+    <![CDATA[
+        SELECT TOP 1
+		  status
+		FROM client
+		WHERE id = ?
+		AND email = ?
+		AND password = ?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getStatusDocumentWebservice">
+    <![CDATA[
+        SELECT TOP 1
+		  status
+		FROM client
+		WHERE id = ?
+		AND email = ?
+		AND password = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getIdDocumentWebservice">
+    <![CDATA[
+        SELECT
+		  id
+		FROM tb_client_user
+		WHERE id = ?
+		AND id = ?
+		AND client_id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="insertDocumentFieldsWebservice">
+    <![CDATA[
+        INSERT INTO documents_fields (document_id, form_field_type, pageno, x_position, y_position, height, width, form_field_name)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="insertDocumentSignWebservice">
+    <![CDATA[
+        INSERT INTO tb_signing_details (client_id, originator_id, signer_id, document_id, signing_order, token, status, created_on, updated_on)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="saveDocumentWebservice">
+    <![CDATA[
+        INSERT INTO tb_document_details (client_id, user_id, document_name, document_original_name, status, created_on, updated_on)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getClientUserWebservice">
+    <![CDATA[
+        SELECT TOP 1
+		  *
+		FROM tb_client_user
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getFieldDataWebservice">
+    <![CDATA[
+        SELECT
+		  f.id,
+		  f.form_field_name,
+		  f.form_field_type,
+		  f.pageno,
+		  f.y_position,
+		  f.x_position,
+		  f.height,
+		  f.width
+		FROM tb_document_details AS doc
+		INNER JOIN documents_fields AS f
+		  ON doc.id = f.document_id
+		WHERE document_name = ?
+    ]]>
+
+</entry>    
+ 
+ 
+ <!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="saveDocumentFieldsWebservice">
+    <![CDATA[
+        UPDATE documents_fields
+		SET form_field_value = ?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+ 
+ 
+ <!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="updateDocumentIdWebservice">
+    <![CDATA[
+        SELECT
+		  tsd.id
+		FROM tb_document_details tdd
+		JOIN tb_signing_details tsd
+		  ON tdd.id = tsd.document_id
+		WHERE tdd.document_name = ?
+		AND tsd.status = ?
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="updateDocumentAllWebservice">
+    <![CDATA[
+        SELECT
+		  tsd.id,
+		  tdd.document_name,
+		  tcu1.email AS originator,
+		  tcu2.email AS signer,
+		  tsd.token
+		FROM tb_signing_details tsd
+		JOIN tb_client_user tcu1
+		  ON tcu1.id = tsd.originator_id
+		JOIN tb_client_user tcu2
+		  ON tcu2.id = tsd.signer_id
+		JOIN tb_document_details tdd
+		  ON tdd.id = tsd.document_id
+		WHERE tsd.id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="updateDocumentSignWebservice">
+    <![CDATA[
+        UPDATE tb_signing_details
+		SET status = 1
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="readValidFileFromOriginator">
+    <![CDATA[
+        SELECT
+		  tsd.id
+		FROM tb_signing_details tsd
+		JOIN tb_client_user tcu1
+		  ON tcu1.id = tsd.originator_id
+		JOIN tb_client_user tcu2
+		  ON tcu2.id = tsd.signer_id
+		JOIN tb_document_details tdd
+		  ON tdd.id = tsd.document_id
+		WHERE tdd.document_name = ?
+		AND tcu1.email = ?
+		AND tcu2.email = ?
+		AND tsd.token = ?
+		AND tsd.status = ?
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getDcoumentWebservice">
+    <![CDATA[
+        SELECT
+		  original,
+		  digital
+		FROM document
+		WHERE envelopeid = ?
+    ]]>
+
+</entry>    
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="createDocumentWebservice">
+    <![CDATA[
+        INSERT INTO document (user_id, envelopeid, name, original, status, file_type, subject, message, sign_type, upload_date)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getUserAllDetails">
+    <![CDATA[
+        SELECT
+		  id,
+		  firstname,
+		  lastname,
+		  photo,
+		  email,
+		  phone,
+		  country,
+		  state,
+		  pincode,
+		  password,
+		  company_name,
+		  job_title,
+		  client_id,
+		  client_secret,
+		  email_verification_token,
+		  user_type,
+		  status,
+		  role,
+		  is_company,
+		  created_on,
+		  updated_on,
+		  project_name,
+		  theme,
+		  drysignlink,
+		  deviceversion
+		FROM users
+		WHERE email = ? 
+    ]]>
+
+</entry>    
+    
+ 
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="modifyDocumentIdWebservice">
+    <![CDATA[
+       SELECT TOP 1
+		  id
+		FROM signer
+		WHERE email = ?
+    ]]>
+
+</entry>
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="modifyDocumentInsertWebservice">
+    <![CDATA[
+	       INSERT INTO signer (name, email, user_type, status, created_on)
+	  VALUES (?, ?, ?, ?, ?)
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="modifyDocumentSignFieldWebservice">
+    <![CDATA[
+        INSERT INTO document_sign_field (signer_id, document_id, page_number, priority, position_left, position_top, height, width, field_value, field_name, field_type, created_date)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>    
+  
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="modifyDocumentSignEmailWebservice">
+    <![CDATA[
+        INSERT INTO document_sign_email (signer_id, document_id, priority, sent_email_count, token, status, created_date)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry> 
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="getDocumentIdWebservice">
+    <![CDATA[
+        SELECT
+		  id
+		FROM document
+		WHERE envelopeid = ?
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="isValidEnvelopeId">
+    <![CDATA[
+        SELECT TOP 1
+		  d.id
+		FROM document d
+		JOIN users u
+		  ON u.id = d.user_id
+		WHERE u.email = ?
+		AND d.envelopeid = ?
+		AND d.status = 0
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="deleteisValidEnvelopeId">
+    <![CDATA[
+        delete dse
+		FROM document d
+		LEFT JOIN document_sign_email dse
+		  ON d.id = dse.document_id
+		LEFT JOIN document_sign_field dsf
+		  ON d.id = dsf.document_id
+		WHERE d.envelopeid = ?
+    ]]>
+
+</entry>   
+
+
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="addRegistrationUser">
+    <![CDATA[
+        INSERT INTO users (firstname, lastname, email, password, email_verification_token, user_type, status, role, created_on, emailalert)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>
+
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="addRegistrationOther">
+    <![CDATA[
+        INSERT INTO users (firstname, lastname, email, phone, country, state, company_name, client_secret, password, email_verification_token, user_type, status, role, created_on, project_name,emailalert)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>     
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="addRegistrationCount">
+    <![CDATA[
+        SELECT
+		  COUNT(*)
+		FROM users
+		WHERE email = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="getVerifyRegistration">
+    <![CDATA[
+        SELECT TOP 1
+		  id
+		FROM users
+		WHERE email = ?
+		AND email_verification_token = ?
+		AND status = 0
+    ]]>
+
+</entry> 
+
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="updateVerifyStatusRegistration">
+    <![CDATA[
+       UPDATE users
+		SET status = 1
+		WHERE id = ?
+    ]]>
+
+</entry>       
+
+ <!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="updateVerifyRegistrationToken">
+    <![CDATA[
+        INSERT INTO token_details (user_id, token, status, valid_from, valid_to)
+  VALUES (?, ?, ?, ?, ?)
+    ]]>
+
+</entry>    
+ 
+ 
+ <!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="loginCall">
+    <![CDATA[
+        SELECT
+		  id,
+		  firstname,
+		  lastname,
+		  photo,
+		  email,
+		  phone,
+		  country,
+		  state,
+		  pincode,
+		  password,
+		  company_name,
+		  job_title,
+		  client_id,
+		  client_secret,
+		  email_verification_token,
+		  user_type,
+		  status,
+		  role,
+		  is_company,
+		  created_on,
+		  updated_on,
+		  project_name,
+		  theme,
+		  drysignlink,
+		  deviceversion,
+		  mobile,
+		  address,
+		  city,
+		  emailalert
+		FROM users
+		WHERE email = ?
+    ]]>
+
+</entry>    
+ 
+ 
+  <!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="checkValidFile">
+    <![CDATA[
+        SELECT
+		  tdd.id
+		FROM tb_document_details tdd
+		JOIN tb_signing_details tsd
+		  ON tdd.id = tsd.document_id
+		WHERE tdd.document_name = ?
+		AND tsd.status = ? 
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with RegistrationDaoImpl.java  -->
+<entry key="getUserAll_Details">
+    <![CDATA[
+        SELECT
+		  id,
+		  firstname,
+		  lastname,
+		  photo,
+		  email,
+		  phone,
+		  country,
+		  state,
+		  pincode,
+		  password,
+		  company_name,
+		  job_title,
+		  client_id,
+		  client_secret,
+		  email_verification_token,
+		  user_type,
+		  status,
+		  role,
+		  is_company,
+		  created_on,
+		  updated_on,
+		  project_name,
+		  theme,
+		  drysignlink,
+		  deviceversion,
+		  emailalert
+		FROM users
+		WHERE email = ? 
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="insertDocumentApp">
+    <![CDATA[
+        INSERT INTO document (user_id, envelopeid, name, original_doc_id, status, file_type, sign_type,upload_date,client_ip_address,doc_status)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getReadDocumentApp">
+    <![CDATA[
+        SELECT
+		  *
+		FROM document
+		WHERE id = ? and user_id=?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="documentSignInsert-SqlCreateGroupSign">
+    <![CDATA[
+       UPDATE document
+		SET subject = ?,
+		    message = ?,
+		    cc=?,
+		    doc_status=?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="userSelectSql-SqlCreateGroupSign">
+    <![CDATA[
+        SELECT TOP 1
+		  id
+		FROM signer
+		WHERE email = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="userInsertSql-SqlCreateGroupSign">
+    <![CDATA[
+        INSERT INTO signer (name, email, user_type, status, created_on)
+  VALUES (?, ?, ?, ?, ?)
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="documentSignFieldInsertSql-SqlCreateGroupSign">
+    <![CDATA[
+       INSERT INTO document_sign_field (signer_id, document_id, page_number, priority, position_left, position_top, height, width, field_value, field_name, field_type, created_date)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="documentSignEmailInsertSql-SqlCreateGroupSign">
+    <![CDATA[
+        INSERT INTO document_sign_email (signer_id, document_id, priority, sent_email_count, token, status, created_date)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getTokenOfDocumentSignEmail">
+    <![CDATA[
+        SELECT
+		  dse.token
+		FROM document_sign_email dse
+		JOIN signer c
+		  ON c.id = dse.signer_id
+		WHERE dse.document_id = ?
+		AND c.email = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getApplicationApp">
+    <![CDATA[
+        SELECT
+		  dsf.*
+		FROM document_sign_field dsf
+		JOIN signer c
+		  ON dsf.signer_id = c.id
+		WHERE c.email = ?
+		AND dsf.document_id = ?
+    ]]>
+
+</entry>    
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="checkValidFileApp">
+    <![CDATA[
+       SELECT
+		  COUNT(dse.document_id)
+		FROM document_sign_email dse
+		JOIN signer c
+		  ON dse.signer_id = c.id
+		WHERE c.email = ?
+		AND dse.document_id = ?
+		AND dse.token = ?
+		AND dse.status = 0
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="checkValidSql-saveAppDocumentFields">
+    <![CDATA[
+        SELECT
+		  dse.priority
+		FROM document_sign_email dse
+		INNER JOIN signer c
+		  ON c.id = dse.signer_id
+		WHERE c.email = ?
+		AND dse.document_id = ?
+		AND dse.token = ?
+		AND dse.status = ?
+    ]]>
+
+</entry>   
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateDocumentSignEmailSql-saveAppDocumentFields">
+    <![CDATA[
+        UPDATE document_sign_email
+		SET status = ?
+		WHERE token = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="OriginatorSql-saveAppDocumentFields">
+    <![CDATA[
+       SELECT
+		  c.email
+		FROM users c
+		INNER JOIN document d
+		  ON d.user_id = c.id
+		WHERE d.id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="nextSignerSql-saveAppDocumentFields">
+    <![CDATA[
+        SELECT
+		  c.email
+		FROM signer c
+		INNER JOIN document_sign_email dse
+		  ON dse.signer_id = c.id
+		  AND dse.document_id = ?
+		  AND dse.priority = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="documentSignSql-saveAppDocumentFields">
+    <![CDATA[
+        SELECT
+		  subject,
+		  message
+		FROM document
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="batchupdate-saveAppDocumentFields">
+    <![CDATA[
+        UPDATE document_sign_field
+		SET field_value = ?
+		WHERE id = ?
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="saveModifiedDocumentElectronicApp">
+    <![CDATA[
+        UPDATE document
+		SET electronic = ?,
+		    complete_date = GETDATE()
+		WHERE id = ?
+    ]]>
+
+</entry>    
+ 
+ 
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="saveModifiedDocumentDigitalApp">
+    <![CDATA[
+        UPDATE document
+		SET status = 1,
+		    digital = ?,
+		    complete_date = GETDATE()
+		WHERE id = ?
+    ]]>
+
+</entry>      
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getUserApp">
+    <![CDATA[
+       SELECT
+		  id,
+		  firstname,
+		  lastname,
+		  photo,
+		  email,
+		  phone,
+		  country,
+		  state,
+		  pincode,
+		  password,
+		  company_name,
+		  job_title,
+		  client_id,
+		  client_secret,
+		  email_verification_token,
+		  user_type,
+		  status,
+		  role,
+		  is_company,
+		  created_on,
+		  updated_on,
+		  project_name,
+		  theme,
+		  drysignlink,
+		  deviceversion
+		FROM users
+		WHERE email = ?
+    ]]>
+
+</entry> 
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getSignerApp">
+    <![CDATA[
+       SELECT
+		  id,
+		  name,
+		  email,
+		  user_type,
+		  status,
+		  created_on,
+		  updated_on
+		FROM signer
+		WHERE email = ?
+    ]]>
+
+</entry>  
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteDocumentApp">
+    <![CDATA[
+        DELETE FROM document
+WHERE id = ?
+    ]]>
+
+</entry>    
+ 
+ <!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteDocument">
+    <![CDATA[
+        update document set doc_status=?
+WHERE id = ?
+    ]]>
+
+</entry>    
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="changePasswordApp">
+    <![CDATA[
+        SELECT
+		  id
+		FROM users
+		WHERE email = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateChangePasswordApp">
+    <![CDATA[
+        UPDATE users
+		SET password = ?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+  
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="changePhotoApp">
+    <![CDATA[
+        UPDATE users
+		SET photo = ?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="forgotPasswordApp">
+    <![CDATA[
+        SELECT
+		  id
+		FROM users
+		WHERE email = ?
+    ]]>
+
+</entry>    
+    
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="addForgotPasswordApp">
+    <![CDATA[
+        INSERT INTO user_forgot_password (user_id, token, status, date)
+  VALUES (?, ?, ?, ?)
+    ]]>
+
+</entry>       
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="resetPasswordUserApp">
+    <![CDATA[
+        UPDATE c
+		SET c.password = ?,
+		    c.status = 1   
+		FROM users c
+		JOIN user_forgot_password ufp
+		  ON c.id = ufp.user_id
+		WHERE ufp.user_id = ?
+		AND ufp.token = ?
+		AND ufp.status = 0
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="resetPasswordUserForgotApp">
+    <![CDATA[
+        UPDATE ufp
+		SET ufp.status = 1
+		FROM users c
+		JOIN user_forgot_password ufp
+		  ON c.id = ufp.user_id
+		WHERE ufp.user_id = ?
+		AND ufp.token = ?
+		AND ufp.status = 0
+    ]]>
+
+</entry>    
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="documentCountApp">
+    <![CDATA[
+        select 
+	  Distinct
+	  (SELECT COUNT(doc_status)
+	   FROM document where doc_status='103' and user_id=? ) completed ,
+	   (SELECT COUNT(doc_status)
+	   FROM document where doc_status='101' and user_id=? ) draft,
+	   (SELECT COUNT(doc_status)
+	   FROM document where doc_status='102' and user_id=? ) outForSignature,
+	   (SELECT COUNT(doc_status)
+	   FROM document where doc_status='104' and user_id=? ) deleted, 
+	   (SELECT COUNT(doc_status)
+	   FROM document where doc_status in('101','102','103') and user_id=? ) totalDocument
+  	 from document where user_id=?
+    ]]>
+
+</entry>    
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateProfileApp">
+    <![CDATA[
+        UPDATE users
+		SET firstname = ?,
+		    lastname = ?,
+		    phone = ?,
+		    country = ?,
+		    state = ?,
+		    pincode = ?
+		WHERE id = ?
+    ]]>
+
+</entry>    
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getDocumentByEnvelopeId">
+    <![CDATA[
+      SELECT TOP 1
+		  id,
+		  name
+		FROM document
+		WHERE envelopeId = ?
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteSignatureApp">
+    <![CDATA[
+      DELETE FROM signature
+WHERE id = ?
+    ]]>
+
+</entry>       
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateInsertSignApp">
+    <![CDATA[
+ 		update signature set flag=? 
+ 		where id = ? 
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateInsertPhotoApp">
+    <![CDATA[
+ 		update photo set flag=? 
+ 		where id = ? 
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getInsertSignApp">
+    <![CDATA[
+ 		select
+ 		 id 
+ 		from signature 
+ 		where user_id = ? 
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getInsertPhotoApp">
+    <![CDATA[
+ 		select
+ 		 id 
+ 		from photo 
+ 		where user_id = ? 
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="addInsertSignApp">
+    <![CDATA[
+        INSERT INTO signature (user_id, signature_data, created_date,flag,sign_type)
+  VALUES (?, ?, ?, ?, ?)
+    ]]>
+
+</entry>   
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="addInsertPhotoApp">
+    <![CDATA[
+        INSERT INTO photo (user_id, photo_data, created_date,flag)
+  VALUES (?, ?, ?, ?)
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteProfilePicApp">
+    <![CDATA[
+        UPDATE users
+		SET photo = NULL
+		WHERE id = ?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="increaseReminderEmailCount">
+    <![CDATA[
+       	UPDATE dse
+		SET dse.sent_email_count = ?
+		FROM document_sign_email
+		dse
+		INNER JOIN signer s
+		  ON dse.signer_id = s.id
+		
+		WHERE dse.document_id = ?
+		AND s.email = ? 
+    ]]>
+
+</entry>
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="checkValidResetPassword">
+    <![CDATA[
+ 		  select
+ 			 f.id 
+ 		  from user_forgot_password  f
+ 		  INNER JOIN users u on u.id=f.user_id
+ 		  where f.user_id = ? and 
+ 		  f.token = ? and
+ 		  u.email=? and
+ 		  f.status = 0
+ 		  
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="checkUserIsExist">
+    <![CDATA[
+ 		select email from users where email=?
+    ]]>
+
+</entry>  
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getPasswordApp">
+    <![CDATA[
+ 		select id,password,status from users where email=?
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getUnRegisteredUsers">
+    <![CDATA[
+ 		select name,email from signer where email not in(select email from users)
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getUserList">
+    <![CDATA[
+ 		SELECT
+			isnull(u.firstname,'') 'firstName',
+			isnull(u.lastname,'') 'lastName',
+			isnull(u.email,'') 'email',
+			isnull(u.role,'') 'role',
+			u.status 'status',
+			convert(nvarchar(10), u.created_on, 103) + right(convert(nvarchar(30), u.created_on, 0), 8) AS createdOn
+		FROM Users as u
+		ORDER BY u.created_on desc
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="webserviceLogs">
+    <![CDATA[
+ 		SELECT 
+			isnull(u.firstname,'')+ ' '+isnull(u.lastname,'') 'name',
+			isnull(u.email,'') 'email',
+			CASE a.method_name
+		      WHEN 'createDocument' THEN 'Created Document'
+		      WHEN 'updatedocument' THEN 'Updated Document'
+		      WHEN 'downloadDocument' THEN 'Download Document'
+		      WHEN 'getDocumentHistory' THEN 'Document History'
+			END 'methodName',
+			isnull(a.ip_address,'') 'ip_address',
+			a.status 'status',
+			CONVERT(VARCHAR(10), isnull(a.created_on,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(a.created_on,''), 22), 11)) AS 'created_on',
+			a.web_request 'webRequest',
+			a.web_response 'webResponse'
+		FROM Audit As a
+		INNER JOIN users u on u.id=a.userid
+		ORDER BY a.created_on desc
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getSubscriptionPlans">
+    <![CDATA[
+ 		select plan_id,currency,amount,plan_name,no_of_days,no_of_documents,status,content from subscription_plan where status=1
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getSubscriptionPlan">
+    <![CDATA[
+ 		select plan_id,currency,amount,plan_name,no_of_days,no_of_documents,status,content from subscription_plan where status=1 and plan_id=?
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updateRegistration">
+    <![CDATA[
+ 		update users 
+		set 
+			firstname=?,
+			lastname=?,
+			mobile=?,
+			phone=?,
+			country=?,
+			state=?,
+			city=?,
+			address=?,
+			pincode=?
+		where 
+			id=? and 
+			email=?
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="updatePassword">
+    <![CDATA[
+ 		update users 
+		set 
+			password=?
+		where 
+			email=?
+			and id=? 
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="insertDraftApp">
+    <![CDATA[
+		insert into draft(doc_id,step,url) values(?,?,?)
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="saveOrUpdateDraft">
+    <![CDATA[
+		update draft set step=?,url=?,increment=? where id=?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="saveOrUpdateDraft1">
+    <![CDATA[
+		update draft set step=?,url=? where id=?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteDocumentFields">
+    <![CDATA[
+		Delete from document_sign_field where document_id= ?
+    ]]>
+
+</entry>
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="deleteDraft">
+    <![CDATA[
+        DELETE FROM draft
+WHERE doc_id = ?
+    ]]>
+
+</entry>    
+ 
+ <!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="saveNotification">
+    <![CDATA[
+        INSERT INTO email_notification (doc_id, user_id, subject, messgae,from_email,to_email,cc,status, reason, created_on) values(?,?,?,?,?,?,?,?,?,?)
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getDraft">
+    <![CDATA[
+       	
+	    SELECT
+		  doc.id AS docId,
+		  doc.envelopeid AS envelopeId,
+		  doc.sign_type AS signType,
+		  doc.name AS documentName,
+		   CONVERT(VARCHAR(10), isnull(doc.upload_date,''), 101) + ' ' + LTRIM(RIGHT(CONVERT(CHAR(20), isnull(doc.upload_date,''), 22), 11)) AS completedDate,
+		  'Draft' AS status
+		FROM document AS doc
+		INNER JOIN users AS cl
+		  ON cl.id = doc.user_id
+		WHERE doc.status = 0
+		and doc.doc_status='101'
+		AND cl.id = ?
+		AND doc.file_type='A'
+		ORDER BY doc.upload_date DESC
+    ]]>
+
+</entry>  
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getDocumentDraft">
+    <![CDATA[
+       	
+	    SELECT
+		 *
+		FROM draft where doc_id=?
+    ]]>
+
+</entry> 
+
+<!-- Entry key mapped with JerseyDaoImpl.java  -->
+<entry key="savesettings">
+    <![CDATA[
+        UPDATE users
+		SET project_name = ?,theme = ?
+		
+    ]]>
+
+</entry>    
+
+<entry key="getSignature">
+    <![CDATA[
+       	
+	   select signature_data As signature_data,
+	   sign_type As sign_type
+	    from signature where user_id=? and flag=?
+    ]]>
+
+</entry> 
+
+<entry key="getPic">
+    <![CDATA[
+       	
+	  select photo_data from photo where user_id=? and flag=?
+    ]]>
+
+</entry>
+
+  <!-- start subscription plans queries -->
+  
+  <!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getSubscriptionPlans">
+    <![CDATA[
+ 		
+ 		select c.name category_name,p.id id,p.token plantoken,p.name plan_name,p.tagline tagline, p.description description, p.features features, p.noofusers noofusers, p.noofdocuments noofdocuments,p.planicon planicon, p.price price, cur.name currency,dur.name durationname, dur.time durationtime, dur.unit durationunit
+		from sb_users u 
+		JOIN sb_category c ON u.id = c.user_id
+		JOIN sb_plans p ON c.category_id = p.category_id
+		JOIN sb_currency cur ON p.currency_id = cur.currency_id
+		JOIN sb_duration dur ON p.duration_id = dur.duration_id
+		WHERE u.status = 1 and c.status = 1 and p.status = 1 and cur.status = 1 and dur.status = 1
+		and u.email = ? and u.password = ? and c.category_id = ? and c.name = ?
+ 		
+    ]]>
+
+</entry> 
+
+
+
+<!-- Entry key mapped with ApplicatonDaoImpl.java  -->
+<entry key="getCategories">
+    <![CDATA[
+ 		select c.* from sb_category c INNER JOIN sb_users u ON u.id = c.user_id where u.email=? and u.password=? and c.status = 1
+    ]]>
+
+</entry> 
+
+<entry key="validSubscribingModel">
+    <![CDATA[
+ 		select id from sb_users where email=? and password = ?
+    ]]>
+
+</entry> 
+
+<entry key="getSubscriptionPlan">
+    <![CDATA[
+ 		
+select c.name category_name,p.id id,p.token plantoken,p.name plan_name,p.tagline tagline, p.description description, p.features features, p.noofusers noofusers, p.noofdocuments noofdocuments,p.planicon planicon, p.price price, cur.name currency,dur.name durationname, dur.time durationtime, dur.unit durationunit
+		from sb_users u 
+		JOIN sb_category c ON u.id = c.user_id
+		JOIN sb_plans p ON c.category_id = p.category_id
+		JOIN sb_currency cur ON p.currency_id = cur.currency_id
+		JOIN sb_duration dur ON p.duration_id = dur.duration_id
+		WHERE u.status = 1 and c.status = 1 and p.status = 1 and cur.status = 1 and dur.status = 1
+		and u.email = ? and u.password = ? and p.token=?
+
+    ]]>
+
+</entry> 
+
+<entry key="getTrialPlan">
+    <![CDATA[
+ 		
+select c.name category_name,p.id id,p.token plantoken,p.name plan_name,p.tagline tagline, p.description description, p.features features, p.noofusers noofusers, p.noofdocuments noofdocuments,p.planicon planicon, p.price price, cur.name currency,dur.name durationname, dur.time durationtime, dur.unit durationunit
+		from sb_users u 
+		JOIN sb_category c ON u.id = c.user_id
+		JOIN sb_plans p ON c.category_id = p.category_id
+		JOIN sb_currency cur ON p.currency_id = cur.currency_id
+		JOIN sb_duration dur ON p.duration_id = dur.duration_id
+		WHERE u.email = ? and u.password = ? and p.name=?
+
+    ]]>
+
+</entry> 
+<entry key="createSubscription">
+    <![CDATA[
+	insert into sb_subscription(user_id,plan_id,credited_documents,used_documents,status,subscription_start_date,subscription_end_date) values(?,?,?,?,?,?,?)
+    ]]>
+
+</entry> 
+
+<entry key="createPurchase">
+    <![CDATA[
+	insert into sb_purchase(subscription_id,plan_name,category_name,plan_price,currency,noofdays,noofdocs,noofusers,
+	features,duration_name,duration_time,duration_unit,transaction_id,payment_method,payment_method_response,status,date,client_referid)
+	values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ]]>
+
+</entry> 
+<entry key="checkValidSubscription">
+    <![CDATA[
+		select TOP 1 * from sb_subscription where user_id=? and status = 1 ORDER BY subscription_start_date DESC
+    ]]>
+
+</entry>
+  
+  
+  <entry key="activePurchase">
+    <![CDATA[
+		SELECT TOP 1
+		  s.id id,
+		  s.user_id user_id,
+		  s.plan_id plan_id,
+		  s.credited_documents credited_documents,
+		  s.used_documents used_documents,
+		  s.status status,
+		  s.subscription_start_date subscription_start_date,
+		  s.subscription_end_date subscription_end_date,
+		  p.plan_name plan_name,
+		  p.noofdays
+		FROM sb_subscription s
+		JOIN sb_purchase p
+		  ON s.id = p.subscription_id
+		WHERE s.status = 1
+		AND s.user_id = ?
+		ORDER BY s.subscription_start_date DESC
+    ]]>
+
+</entry>
+  
+  <!-- end subscription plans queries -->
+  <entry key="saveTempSigner">
+    <![CDATA[
+		insert into tempSigner(doc_id,draft_id,priority,name,email,flag) values(?,?,?,?,?,?)
+    ]]>
+
+</entry>
+
+  <!-- end subscription plans queries -->
+  <entry key="getTempSigner">
+    <![CDATA[
+		select
+		 doc_id AS docId,
+		 draft_id AS draftId,
+		 priority AS priority,
+		 name As signerName,
+		 email As signerEmail,
+		 flag As flag
+		from tempSigner where doc_id=?
+    ]]>
+
+</entry>
+
+
+  <entry key="deleteTempSigner">
+    <![CDATA[
+		Delete from tempSigner where doc_id=?
+    ]]>
+
+</entry>
+
+<entry key="updateSubscription">
+    <![CDATA[
+		update sb_subscription set status = ? where id = ?
+    ]]>
+
+</entry>
+
+<entry key="updatePurchase">
+    <![CDATA[
+		update sb_purchase set transaction_id = ?, payment_method=?,payment_method_response=? ,status = ? where subscription_id = ?
+    ]]>
+
+</entry>
+
+<entry key="getDocumentId">
+    <![CDATA[
+	select id from document where  envelopeid=? and user_id=? and (doc_status=101 or doc_status=102)
+
+    ]]>
+
+</entry>
+
+
+<entry key="incrementDocumentUsedCount">
+    <![CDATA[
+		UPDATE sb_subscription
+		SET used_documents = used_documents+1
+		WHERE id IN 
+		(
+		   SELECT TOP 1 id
+		   FROM sb_subscription WHERE user_id=? and status = 1
+		   ORDER BY subscription_start_date DESC 
+		)
+    ]]>
+
+</entry>
+
+<entry key="decrementDocumentUsedCount">
+    <![CDATA[
+		UPDATE sb_subscription
+		SET used_documents = used_documents-1
+		WHERE id IN 
+		(
+		   SELECT TOP 1 id
+		   FROM sb_subscription WHERE user_id=? and status = 1
+		   ORDER BY subscription_start_date DESC 
+		)
+    ]]>
+
+</entry>
+
+<entry key="sendEmailToSubscribers">
+    <![CDATA[
+		
+		
+		WITH CTE AS
+		(
+		     SELECT S.ID, S.USER_ID, PLAN_ID, P.NAME as PLANNAME, CREDITED_DOCUMENTS, USED_DOCUMENTS, S.STATUS, SUBSCRIPTION_START_DATE, SUBSCRIPTION_END_DATE,(CAST (USED_DOCUMENTS AS NUMERIC(6,2)) /CAST (CREDITED_DOCUMENTS AS NUMERIC(6,2))) *100 AS DOCPERC , 
+		     U.FIRSTNAME,U.LASTNAME,U.EMAIL,DATEDIFF(DD,CAST(CONVERT(VARCHAR(10),[SUBSCRIPTION_END_DATE],101) AS DATETIME) , CAST(CONVERT(VARCHAR(10),GETDATE()+ ?,101) AS DATETIME)) SUBSCRIPTION_END_DAYS
+		     FROM [DBO].[SB_SUBSCRIPTION]S 
+		     INNER JOIN (SELECT USER_ID,MAX([SUBSCRIPTION_END_DATE]) SUBDATE  FROM [DBO].[SB_SUBSCRIPTION]
+		     GROUP BY USER_ID)  MD ON MD.USER_ID=S.USER_ID AND MD.SUBDATE=S.SUBSCRIPTION_END_DATE
+		     INNER JOIN [dbo].[users] U ON (S.USER_ID=U.ID)
+		     INNER JOIN SB_PLANS P ON P.ID = PLAN_ID
+		)
+		SELECT PLANNAME , ID, USER_ID, PLAN_ID, CREDITED_DOCUMENTS, USED_DOCUMENTS, STATUS, SUBSCRIPTION_START_DATE, SUBSCRIPTION_END_DATE,FIRSTNAME,LASTNAME,EMAIL,DOCPERC,SUBSCRIPTION_END_DAYS
+		FROM CTE 
+		WHERE (DOCPERC > 90.00
+		OR (SUBSCRIPTION_END_DAYS>=1 AND SUBSCRIPTION_END_DAYS <=?)) AND STATUS=1 		
+		
+    ]]>
+
+</entry>
+
+<!-- end subscription plans queries -->
+  <entry key="saveGroupSigner">
+    <![CDATA[
+		insert into signer(name,email,user_type,status,user_id,sign_url,created_on,doc_id) values(?,?,?,?,?,?,?,?)
+    ]]>
+
+</entry>
+
+<entry key="getSignerToken">
+    <![CDATA[
+		select sign_url from signer where id=?
+    ]]>
+
+</entry>
+
+<entry key="checkValidSigneKey">
+    <![CDATA[
+		select 
+			DISTINCT s.id 'signerId',
+			d.id 'docId',
+			s.status 'status',
+			d.sign_type 'signType',
+			d.user_id 'requestedBy',
+			s.email 'signerEmail',
+			f.priority 'priority',
+			isnull(u.firstname,'')+' '+isnull(u.lastname,'') 'requestName',
+			isnull(u.email,'') 'requestEmail',
+			u.project_name 'projectName',
+			s.name 'signerName',
+			d.doc_status 'docStatus'
+			from signer s 
+			INNER JOIN document_sign_field f on s.id=f.signer_id
+			INNER JOIN document d on f.document_id=d.id
+			INNER JOIN users u on u.id=d.user_id
+		where s.sign_url=?
+    ]]>
+
+</entry>
+
+<entry key="getAllSignerStatus">
+    <![CDATA[
+	select 
+		DISTINCT s.email 'signerEmail', 
+		s.status 'signerStatus'
+	from  signer s
+	INNER JOIN document_sign_field f
+	ON s.id=f.signer_id
+	where document_id=?
+    ]]>
+
+</entry>
+
+<entry key="updateSignerStatus">
+    <![CDATA[
+		update signer set signer_doc_id=?,status=? where id=?
+    ]]>
+
+</entry>
+
+<entry key="updateSignerFields">
+    <![CDATA[
+		update document_sign_field set field_value=? where id=?
+    ]]>
+
+</entry>
+
+<entry key="nextSignerData">
+    <![CDATA[
+		select 
+		DISTINCT s.email 'signerEmail', 
+		s.name 'signerName',
+		s.status 'signStatus',
+		s.sign_url 'signerUrl'
+	from  signer s
+	INNER JOIN document_sign_field f
+	ON s.id=f.signer_id
+	where f.document_id=? and f.priority=? and s.status=0
+    ]]>
+
+</entry>
+
+<entry key="checkValidPrepareKey">
+    <![CDATA[
+		select d.doc_status 'docStatus',d.id 'docId',d.user_id 'userId',d.prepare_return_url 'prepareReturnURL' from document As d where prepare_doc_url=?
+    ]]>
+
+</entry>
+
+<entry key="getSignerList">
+    <![CDATA[
+			select 
+			Distinct s.id As 'signerId',
+			f.priority As 'priority',
+			s.name As 'signerName',
+			s.email As 'signerEmail'
+		from signer s INNER JOIN document_sign_field f
+		ON s.id=f.signer_id
+		where s.doc_id =? order by f.priority asc
+ 
+    ]]>
+
+</entry>
+
+<entry key="getSignerList1">
+    <![CDATA[
+		select 
+		id As 'signerId',
+		name As 'signerName',
+		email As 'signerEmail'
+		from signer
+		 where doc_id =?
+ 
+    ]]>
+
+</entry>
+
+<entry key="getDocumentByEnvelopeId">
+    <![CDATA[
+		select * from document where envelopeId = ?
+ 
+    ]]>
+
+</entry>
+<entry key="getUserSignatureByToken">
+    <![CDATA[
+		select 
+		id As 'id',
+		firstname As 'firstName',
+		lastname As 'lastName',
+		email As 'email',
+		signature As 'signature',
+		status As 'status',
+		sign_type As 'signType'
+		from tbmst_signer_sign
+		where token =?
+ 
+    ]]>
+
+</entry>
+<entry key="getUserSignatureByEmail">
+    <![CDATA[
+		select 
+		id As 'id',
+		firstname As 'firstName',
+		lastname As 'lastName',
+		email As 'email',
+		signature As 'signature',
+		status As 'status',
+		sign_type As 'signType'
+		from tbmst_signer_sign
+		where email =?
+ 
+    ]]>
+
+</entry>
+<entry key="updateUserSignature">
+    <![CDATA[
+		update tbmst_signer_sign set signature=?,status=?,sign_type=?,updated_date=? where email=?
+    ]]>
+
+</entry>
+<entry key="saveUserSignature">
+    <![CDATA[
+		insert into tbmst_signer_sign(firstname,lastname,email,signature,token,status,created_date,sign_type) values(?,?,?,?,?,?,?,?)
+    ]]>
+
+</entry>
+<entry key="updateSignerEmail">
+    <![CDATA[
+		update signer set name=?,sign_url=?, email=? where id=?
+    ]]>
+
+</entry>
+
+<entry key="removeSigner">
+    <![CDATA[
+		delete from signer where id=? and doc_id=?
+    ]]>
+
+</entry>
+
+<entry key="updateSignerPriority">
+    <![CDATA[
+		update document_sign_field set priority=? where signer_id=? and document_id=?
+    ]]>
+
+</entry>
+
+
+</properties>
